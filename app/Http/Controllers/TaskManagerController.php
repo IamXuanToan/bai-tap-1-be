@@ -10,10 +10,31 @@ class TaskManagerController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         //
-        return TaskManager::orderByDesc('id')->get();
+        $text = $request->input('text');
+        $status = $request->input('status');
+        $date = $request->input('date');
+        $tasks = TaskManager::query()->orderByDesc('id');
+
+        // return $request;
+
+        if ($text != null || $status != null || $date != null) {
+            $tasks->when($text, function ($tasks, $text){
+                return $tasks->where('title', 'like', "%{$text}%");
+            })
+            ->when($date, function ($tasks, $date){
+                return $tasks->whereBetween('start_date', $date);
+            })
+            ->when($status, function ($tasks, $status){
+                return $tasks->whereIn('status', $status);
+            });
+
+            return $tasks->get();
+        }
+
+        return $tasks->get();
     }
 
     /**
